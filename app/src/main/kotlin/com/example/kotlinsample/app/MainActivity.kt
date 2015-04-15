@@ -5,9 +5,7 @@ import android.support.v7.app.ActionBarActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -24,6 +22,7 @@ import rx.android.view.ViewObservable
 import rx.functions.Action1
 
 import rx.android.schedulers.AndroidSchedulers.mainThread
+import java.util.zip.GZIPInputStream
 
 data class GitHubRepository(
         val id: Int,
@@ -47,6 +46,7 @@ public class MainActivity : RxActivity() {
 
     var miscText: TextView? = null
     var button: Button? = null
+    var notificationList: ListView? = null
 
     var buttonSubscription: Subscription? = null
     var githubSubscription: Subscription? = null
@@ -61,12 +61,19 @@ public class MainActivity : RxActivity() {
             .build()
             .create(javaClass<GitHubNotificationService>())
 
+    var notificationsAdapter: ArrayAdapter<String>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         button = findViewById(R.id.button) as Button?
         miscText = findViewById(R.id.miscText) as TextView?
+        notificationList = findViewById(R.id.notificationList) as ListView?
+
+        notificationsAdapter = ArrayAdapter<String>(this, R.layout.list_item_view)
+
+        notificationList?.setAdapter(notificationsAdapter)
 
         loadNotification()
     }
@@ -95,6 +102,11 @@ public class MainActivity : RxActivity() {
                 observeOn(mainThread()).
                 subscribe({notifications ->
                     miscText?.setText("Notifications: " + notifications.size())
+                    notificationsAdapter?.clear()
+                    for (notification in notifications) {
+                        notificationsAdapter?.add(notification.subject.title)
+                    }
+
                 }, { throwable ->
                     miscText?.setText("Error: " + throwable)
                 })

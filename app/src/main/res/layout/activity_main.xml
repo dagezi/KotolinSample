@@ -17,9 +17,15 @@
 
     <Button
             android:id="@+id/button"
-            android:text="Push me!"
+            android:text="Reload"
             android:layout_below="@id/miscText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
+    <ListView
+            android:id="@+id/notificationList"
+            android:layout_below="@id/button"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
 </RelativeLayout>
