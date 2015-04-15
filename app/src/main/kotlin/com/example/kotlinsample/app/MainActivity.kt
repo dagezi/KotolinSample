@@ -4,14 +4,30 @@ import android.os.Bundle
 import android.support.v7.app.ActionBarActivity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.Button
+import android.widget.TextView
 
 public class MainActivity : ActionBarActivity() {
+
+    var miscText: TextView? = null
+    var button: Button? = null
+    var count: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-    }
 
+        button = findViewById(R.id.button) as Button?
+        miscText = findViewById(R.id.miscText) as TextView?
+
+        button?.setOnClickListener(object: View.OnClickListener {
+            override fun onClick(v: View?) {
+                count++
+                miscText?.setText(count.toString())
+            }
+        })
+    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
