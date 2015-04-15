@@ -7,12 +7,22 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
+import rx.Subscription
 
-public class MainActivity : ActionBarActivity() {
+import rx.android.app.RxActivity;
+import rx.android.lifecycle.LifecycleObservable
+import rx.android.view.OnClickEvent
+import rx.android.view.ViewObservable
+import rx.functions.Action1
+
+public class MainActivity : RxActivity() {
 
     var miscText: TextView? = null
     var button: Button? = null
     var count: Int = 0
+
+    var subscription: Subscription? = null;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,13 +30,17 @@ public class MainActivity : ActionBarActivity() {
 
         button = findViewById(R.id.button) as Button?
         miscText = findViewById(R.id.miscText) as TextView?
+    }
 
-        button?.setOnClickListener(object: View.OnClickListener {
-            override fun onClick(v: View?) {
-                count++
-                miscText?.setText(count.toString())
-            }
-        })
+    override fun onStart() {
+        super.onStart()
+
+        subscription =
+                LifecycleObservable.bindActivityLifecycle(lifecycle(), ViewObservable.clicks(button))
+                        ?.subscribe {
+                                count++
+                                miscText?.setText(count.toString())
+                            }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
