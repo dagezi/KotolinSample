@@ -27,6 +27,7 @@ android {
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
+        buildConfigField "String", "GITHUB_AUTH_TOKEN", "\"${project.githubAuthToken}\""
     }
 
     compileOptions {
@@ -50,4 +51,5 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'io.reactivex:rxandroid:0.24.0'
     compile 'io.reactivex:rxandroid-framework:0.24.0'
+    compile 'com.squareup.retrofit:retrofit:1.9.0'
 }

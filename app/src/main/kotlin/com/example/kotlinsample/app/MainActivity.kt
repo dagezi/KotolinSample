@@ -8,21 +8,58 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import com.google.gson.FieldNamingPolicy
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import retrofit.RestAdapter
+import retrofit.converter.GsonConverter
+import retrofit.http.GET
+import retrofit.http.Query
+import rx.Observable
 import rx.Subscription
-
 import rx.android.app.RxActivity;
 import rx.android.lifecycle.LifecycleObservable
 import rx.android.view.OnClickEvent
 import rx.android.view.ViewObservable
 import rx.functions.Action1
 
+import rx.android.schedulers.AndroidSchedulers.mainThread
+
+data class GitHubRepository(
+        val id: Int,
+        val fullName: String)
+
+data class GitHubSubject(
+        val title: String,
+        val type: String)
+
+data class GitHubNotification(
+        val id: String,
+        val repository: GitHubRepository,
+        val subject: GitHubSubject)
+
+trait GitHubNotificationService {
+    GET("/notifications")
+    fun notifications(Query("access_token") accessToken: String ) : Observable<List<GitHubNotification>>
+}
+
 public class MainActivity : RxActivity() {
 
     var miscText: TextView? = null
     var button: Button? = null
-    var count: Int = 0
 
-    var subscription: Subscription? = null;
+    var buttonSubscription: Subscription? = null
+    var githubSubscription: Subscription? = null
+
+    val apiGson = GsonBuilder()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create()
+
+    val service : GitHubNotificationService = RestAdapter.Builder()
+            .setEndpoint("https://api.github.com")
+            .setConverter(GsonConverter(apiGson))
+            .build()
+            .create(javaClass<GitHubNotificationService>())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,23 +67,37 @@ public class MainActivity : RxActivity() {
 
         button = findViewById(R.id.button) as Button?
         miscText = findViewById(R.id.miscText) as TextView?
+
+        loadNotification()
     }
 
     override fun onStart() {
         super.onStart()
 
-        subscription =
+        buttonSubscription =
                 LifecycleObservable.bindActivityLifecycle(lifecycle(), ViewObservable.clicks(button))
                         ?.subscribe {
-                                count++
-                                miscText?.setText(count.toString())
-                            }
+                            loadNotification()
+                        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu)
+
         return true
+    }
+
+    fun loadNotification() {
+        miscText?.setText("Loading")
+        githubSubscription = service.
+                notifications(BuildConfig.GITHUB_AUTH_TOKEN).
+                observeOn(mainThread()).
+                subscribe({notifications ->
+                    miscText?.setText("Notifications: " + notifications.size())
+                }, { throwable ->
+                    miscText?.setText("Error: " + throwable)
+                })
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
