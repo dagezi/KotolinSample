@@ -1,14 +1,19 @@
 package com.example.kotlinsample.app
 
+import android.database.DataSetObserver
 import android.os.Bundle
 import android.support.v7.app.ActionBarActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import kotlinx.android.anko.text
+import kotlinx.android.anko.textSize
+import kotlinx.android.anko.textView
 import retrofit.RestAdapter
 import retrofit.converter.GsonConverter
 import retrofit.http.GET
@@ -22,6 +27,7 @@ import rx.android.view.ViewObservable
 import rx.functions.Action1
 
 import rx.android.schedulers.AndroidSchedulers.mainThread
+import java.util.ArrayList
 import java.util.zip.GZIPInputStream
 
 data class GitHubRepository(
@@ -61,7 +67,7 @@ public class MainActivity : RxActivity() {
             .build()
             .create(javaClass<GitHubNotificationService>())
 
-    var notificationsAdapter: ArrayAdapter<String>? = null
+    val notificationsAdapter = NotificationsAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,9 +76,6 @@ public class MainActivity : RxActivity() {
         button = findViewById(R.id.button) as Button?
         miscText = findViewById(R.id.miscText) as TextView?
         notificationList = findViewById(R.id.notificationList) as ListView?
-
-        notificationsAdapter = ArrayAdapter<String>(this, R.layout.list_item_view)
-
         notificationList?.setAdapter(notificationsAdapter)
 
         loadNotification()
@@ -102,11 +105,8 @@ public class MainActivity : RxActivity() {
                 observeOn(mainThread()).
                 subscribe({notifications ->
                     miscText?.setText("Notifications: " + notifications.size())
-                    notificationsAdapter?.clear()
-                    for (notification in notifications) {
-                        notificationsAdapter?.add(notification.subject.title)
-                    }
-
+                    notificationsAdapter.notifications = notifications
+                    notificationsAdapter.notifyDataSetChanged()
                 }, { throwable ->
                     miscText?.setText("Error: " + throwable)
                 })
@@ -124,5 +124,47 @@ public class MainActivity : RxActivity() {
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    inner class NotificationsAdapter : BaseAdapter() {
+        var notifications : List<GitHubNotification> = ArrayList()
+
+        override fun getItemViewType(position: Int): Int {
+            return 0
+        }
+
+        override fun getCount(): Int {
+            return notifications.size()
+        }
+
+        override fun getViewTypeCount(): Int {
+            return 1
+        }
+
+        override fun isEmpty(): Boolean {
+            return notifications.isEmpty()
+        }
+        override fun getItem(position: Int): Any? {
+            return notifications[position]
+        }
+
+        override fun getItemId(position: Int): Long {
+            return notifications[position].id.hashCode() as Long
+        }
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View? {
+            var view : TextView =
+               if (convertView == null || convertView !is TextView) {
+                   with(parent) {
+                       textView() {
+                           textSize = 16f
+                       }
+                   }
+               } else {
+                   convertView
+               }
+            view.setText(notifications[position].subject.title)
+            return view
+        }
     }
 }
