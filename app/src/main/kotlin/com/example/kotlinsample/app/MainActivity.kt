@@ -1,5 +1,6 @@
 package com.example.kotlinsample.app
 
+import android.content.Context
 import android.database.DataSetObserver
 import android.os.Bundle
 import android.support.v7.app.ActionBarActivity
@@ -11,9 +12,7 @@ import android.widget.*
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import kotlinx.android.anko.text
-import kotlinx.android.anko.textSize
-import kotlinx.android.anko.textView
+import kotlinx.android.anko.*
 import retrofit.RestAdapter
 import retrofit.converter.GsonConverter
 import retrofit.http.GET
@@ -67,7 +66,7 @@ public class MainActivity : RxActivity() {
             .build()
             .create(javaClass<GitHubNotificationService>())
 
-    val notificationsAdapter = NotificationsAdapter()
+    var notificationsAdapter: NotificationsAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +75,7 @@ public class MainActivity : RxActivity() {
         button = findViewById(R.id.button) as Button?
         miscText = findViewById(R.id.miscText) as TextView?
         notificationList = findViewById(R.id.notificationList) as ListView?
+        notificationsAdapter =  NotificationsAdapter(this, arrayListOf())
         notificationList?.setAdapter(notificationsAdapter)
 
         loadNotification()
@@ -105,8 +105,8 @@ public class MainActivity : RxActivity() {
                 observeOn(mainThread()).
                 subscribe({notifications ->
                     miscText?.setText("Notifications: " + notifications.size())
-                    notificationsAdapter.notifications = notifications
-                    notificationsAdapter.notifyDataSetChanged()
+                    notificationsAdapter?.clear()
+                    notificationsAdapter?.addAll(notifications)
                 }, { throwable ->
                     miscText?.setText("Error: " + throwable)
                 })
@@ -126,36 +126,27 @@ public class MainActivity : RxActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    inner class NotificationsAdapter : BaseAdapter() {
-        var notifications : List<GitHubNotification> = ArrayList()
+    inner class NotificationsAdapter(ctx: Context, notifications : List<GitHubNotification>) :
+            ArrayAdapter<GitHubNotification>(ctx, 0, notifications) {
+        public inline fun <T: Any> dsl(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) f: UiHelper.() -> T): T {
+            var view: T? = null
+            getContext().UI { view = f() }
+            return view!!
+        }
 
         override fun getItemViewType(position: Int): Int {
             return 0
-        }
-
-        override fun getCount(): Int {
-            return notifications.size()
         }
 
         override fun getViewTypeCount(): Int {
             return 1
         }
 
-        override fun isEmpty(): Boolean {
-            return notifications.isEmpty()
-        }
-        override fun getItem(position: Int): Any? {
-            return notifications[position]
-        }
-
-        override fun getItemId(position: Int): Long {
-            return notifications[position].id.hashCode() as Long
-        }
-
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View? {
+            val notification = getItem(position)
             var view : TextView =
                if (convertView == null || convertView !is TextView) {
-                   with(parent) {
+                   dsl {
                        textView() {
                            textSize = 16f
                        }
@@ -163,7 +154,7 @@ public class MainActivity : RxActivity() {
                } else {
                    convertView
                }
-            view.setText(notifications[position].subject.title)
+            view.setText(notification.subject.title)
             return view
         }
     }
