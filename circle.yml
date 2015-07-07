@@ -1,0 +1,25 @@
+machine:
+  environment:
+    ANDROID_HOME: /usr/local/android-sdk-linux
+    PATH: $ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$PATH
+
+dependencies:
+  cache_directories:
+    - "~/.gradle"
+    - "~/.android"
+    - "/usr/local/android-sdk-linux/platforms"
+    - "/usr/local/android-sdk-linux/system-images"
+    - "/usr/local/android-sdk-linux/build-tools"
+    - "/usr/local/android-sdk-linux/extras"
+
+  override:
+    - echo githubAuthToken="dummy" > app/gradle.properties
+    - TERM=dumb ./gradlew :app:dependencies 
+
+test:
+  override:
+    - TERM=dumb ./gradlew :app:build -PdisablePreDex
+
+general:
+  artifacts:
+    - "app/build/outputs"  # APK, test log and lint log
