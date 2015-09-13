@@ -12,7 +12,7 @@ import android.widget.*
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import kotlinx.android.anko.*
+import org.jetbrains.anko.*
 import retrofit.RestAdapter
 import retrofit.converter.GsonConverter
 import retrofit.http.GET
