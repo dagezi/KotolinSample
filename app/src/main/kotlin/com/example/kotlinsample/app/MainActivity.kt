@@ -1,5 +1,6 @@
 package com.example.kotlinsample.app
 
+import android.app.Activity
 import android.content.Context
 import android.database.DataSetObserver
 import android.os.Bundle
@@ -42,9 +43,9 @@ data class GitHubNotification(
         val repository: GitHubRepository,
         val subject: GitHubSubject)
 
-trait GitHubNotificationService {
-    GET("/notifications")
-    fun notifications(Query("access_token") accessToken: String ) : Observable<List<GitHubNotification>>
+interface GitHubNotificationService {
+    @GET("/notifications")
+    fun notifications(@Query("access_token") accessToken: String ) : Observable<List<GitHubNotification>>
 }
 
 public class MainActivity : RxActivity() {
@@ -64,7 +65,7 @@ public class MainActivity : RxActivity() {
             .setEndpoint("https://api.github.com")
             .setConverter(GsonConverter(apiGson))
             .build()
-            .create(javaClass<GitHubNotificationService>())
+            .create(GitHubNotificationService::class.java)
 
     var notificationsAdapter: NotificationsAdapter? = null
 
@@ -128,7 +129,7 @@ public class MainActivity : RxActivity() {
 
     inner class NotificationsAdapter(ctx: Context, notifications : List<GitHubNotification>) :
             ArrayAdapter<GitHubNotification>(ctx, 0, notifications) {
-        public inline fun <T: Any> dsl(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) f: UiHelper.() -> T): T {
+        public inline fun <T: Any> dsl(crossinline f: AnkoContext<Context>.() -> T): T {
             var view: T? = null
             getContext().UI { view = f() }
             return view!!
