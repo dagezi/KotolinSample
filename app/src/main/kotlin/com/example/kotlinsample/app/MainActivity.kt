@@ -2,33 +2,27 @@ package com.example.kotlinsample.app
 
 import android.app.Activity
 import android.content.Context
-import android.database.DataSetObserver
 import android.os.Bundle
-import android.support.v7.app.ActionBarActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ListView
+import android.widget.TextView
 import com.google.gson.FieldNamingPolicy
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import org.jetbrains.anko.*
+import org.jetbrains.anko.AnkoContext
+import org.jetbrains.anko.UI
+import org.jetbrains.anko.textView
 import retrofit.RestAdapter
 import retrofit.converter.GsonConverter
 import retrofit.http.GET
 import retrofit.http.Query
 import rx.Observable
 import rx.Subscription
-import rx.android.app.RxActivity;
-import rx.android.lifecycle.LifecycleObservable
-import rx.android.view.OnClickEvent
-import rx.android.view.ViewObservable
-import rx.functions.Action1
-
 import rx.android.schedulers.AndroidSchedulers.mainThread
-import java.util.ArrayList
-import java.util.zip.GZIPInputStream
 
 data class GitHubRepository(
         val id: Int,
@@ -48,13 +42,12 @@ interface GitHubNotificationService {
     fun notifications(@Query("access_token") accessToken: String ) : Observable<List<GitHubNotification>>
 }
 
-public class MainActivity : RxActivity() {
+public class MainActivity : Activity() {
 
     var miscText: TextView? = null
     var button: Button? = null
     var notificationList: ListView? = null
 
-    var buttonSubscription: Subscription? = null
     var githubSubscription: Subscription? = null
 
     val apiGson = GsonBuilder()
@@ -78,18 +71,9 @@ public class MainActivity : RxActivity() {
         notificationList = findViewById(R.id.notificationList) as ListView?
         notificationsAdapter =  NotificationsAdapter(this, arrayListOf())
         notificationList?.setAdapter(notificationsAdapter)
+        button?.setOnClickListener { v -> loadNotification() }
 
         loadNotification()
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        buttonSubscription =
-                LifecycleObservable.bindActivityLifecycle(lifecycle(), ViewObservable.clicks(button))
-                        ?.subscribe {
-                            loadNotification()
-                        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
